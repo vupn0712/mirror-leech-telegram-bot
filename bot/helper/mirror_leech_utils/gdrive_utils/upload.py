@@ -2,6 +2,7 @@ from googleapiclient.errors import HttpError
 from googleapiclient.http import MediaFileUpload
 from logging import getLogger
 from os import path as ospath, listdir, remove, walk
+from time import time
 from tenacity import (
     retry,
     wait_exponential,
