@@ -1,7 +1,7 @@
 from googleapiclient.errors import HttpError
 from googleapiclient.http import MediaFileUpload
 from logging import getLogger
-from os import path as ospath, listdir, remove
+from os import path as ospath, listdir, remove, walk
 from tenacity import (
     retry,
     wait_exponential,
@@ -62,6 +62,10 @@ class GoogleDriveUpload(GoogleDriveHelper):
                 LOGGER.info(f"Uploaded To G-Drive: {self._path}")
             else:
                 mime_type = "Folder"
+                self.total_files_to_upload = sum(
+                    len(f) for _, _, f in walk(self._path)
+                )
+                self._upload_start_time = time()
                 dir_id = self.create_directory(
                     ospath.basename(ospath.abspath(self.listener.name)),
                     self.listener.up_dest,
@@ -121,8 +125,11 @@ class GoogleDriveUpload(GoogleDriveHelper):
             else:
                 mime_type = get_mime_type(current_file_name)
                 file_name = current_file_name.split("/")[-1]
+                f_size = ospath.getsize(current_file_name)
                 self._upload_file(current_file_name, file_name, mime_type, dest_id)
                 self.total_files += 1
+                self.uploaded_files_count += 1
+                self.proc_bytes += f_size
                 new_id = dest_id
             if self.listener.is_cancelled:
                 break
@@ -213,6 +220,7 @@ class GoogleDriveUpload(GoogleDriveHelper):
         except:
             pass
         self.file_processed_bytes = 0
+        self.status = None
         if not Config.IS_TEAM_DRIVE:
             self.set_permission(response["id"])
         if not in_dir:

@@ -50,6 +50,7 @@ class TelegramUploader:
         self._path = path
         self._start_time = time()
         self._total_files = 0
+        self._total_files_to_upload = 0
         self._thumb = self._listener.thumb or f"thumbnails/{listener.user_id}.jpg"
         self._msgs_dict = {}
         self._corrupted = 0
@@ -229,6 +230,9 @@ class TelegramUploader:
         res = await self._msg_to_reply()
         if not res:
             return
+        self._total_files_to_upload = sum(
+            len(f) for _, _, f in await sync_to_async(walk, self._path)
+        )
         for dirpath, _, files in natsorted(await sync_to_async(walk, self._path)):
             if dirpath.strip().endswith("/yt-dlp-thumb"):
                 continue

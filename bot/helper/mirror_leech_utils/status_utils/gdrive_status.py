@@ -35,19 +35,32 @@ class GoogleDriveStatus:
         return self._gid
 
     def progress_raw(self):
+        if self._obj.total_files_to_upload > 0:
+            return self._obj.uploaded_files_count / self._obj.total_files_to_upload * 100
         try:
             return self._obj.processed_bytes / self._size * 100
         except:
             return 0
 
     def progress(self):
-        return f"{round(self.progress_raw(), 2)}%"
+        pct = round(self.progress_raw(), 2)
+        if self._obj.total_files_to_upload > 0:
+            return f"{pct}% ({self._obj.uploaded_files_count}/{self._obj.total_files_to_upload} files)"
+        return f"{pct}%"
 
     def speed(self):
         return f"{get_readable_file_size(self._obj.speed)}/s"
 
     def eta(self):
         try:
+            if self._obj.total_files_to_upload > 0:
+                remaining = self._obj.total_files_to_upload - self._obj.uploaded_files_count
+                if self._obj.uploaded_files_count > 0:
+                    from time import time
+                    elapsed = time() - self._obj._upload_start_time
+                    per_file = elapsed / self._obj.uploaded_files_count
+                    return get_readable_time(remaining * per_file)
+                return "-"
             seconds = (self._size - self._obj.processed_bytes) / self._obj.speed
             return get_readable_time(seconds)
         except:

@@ -29,6 +29,11 @@ class TelegramStatus:
         return self.listener.name
 
     def progress(self):
+        if self._obj._total_files_to_upload > 1:
+            done = self._obj._total_files
+            total = self._obj._total_files_to_upload
+            pct = round(done / total * 100, 2)
+            return f"{pct}% ({done}/{total} files)"
         try:
             progress_raw = self._obj.processed_bytes / self._size * 100
         except:
@@ -40,6 +45,15 @@ class TelegramStatus:
 
     def eta(self):
         try:
+            if self._obj._total_files_to_upload > 1:
+                done = self._obj._total_files
+                remaining = self._obj._total_files_to_upload - done
+                if done > 0:
+                    from time import time
+                    elapsed = time() - self._obj._start_time
+                    per_file = elapsed / done
+                    return get_readable_time(remaining * per_file)
+                return "-"
             seconds = (self._size - self._obj.processed_bytes) / self._obj.speed
             return get_readable_time(seconds)
         except:

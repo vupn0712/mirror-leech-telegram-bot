@@ -3,10 +3,11 @@ from googleapiclient.discovery import build
 from google_auth_httplib2 import AuthorizedHttp
 from googleapiclient.http import build_http
 from logging import getLogger, ERROR
-from os import path as ospath, listdir
+from os import path as ospath, listdir, walk
 from pickle import load as pload
 from random import randrange
 from re import search as re_search
+from time import time
 from urllib.parse import parse_qs, urlparse
 from tenacity import (
     retry,
@@ -47,10 +48,17 @@ class GoogleDriveHelper:
         self.status = None
         self.update_interval = 3
         self.use_sa = Config.USE_SERVICE_ACCOUNTS
+        self.total_files_to_upload = 0
+        self.uploaded_files_count = 0
+        self._upload_start_time = 0
 
     @property
     def speed(self):
         try:
+            if self.total_files_to_upload > 0 and self._upload_start_time > 0:
+                elapsed = time() - self._upload_start_time
+                if elapsed > 0:
+                    return self.proc_bytes / elapsed
             return self.proc_bytes / self.total_time
         except:
             return 0
