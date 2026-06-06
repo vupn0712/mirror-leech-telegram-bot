@@ -34,6 +34,29 @@ class DbManager:
             self._return = True
             self._conn = None
 
+    async def _get_sync_db(self):
+        if self._return or not self._conn:
+            return None
+        db_name = Config.RCLONE_SYNC_DB or "rclone_configs"
+        return self._conn[db_name]
+
+    async def get_synced_user_config(self, user_id):
+        sync_db = await self._get_sync_db()
+        if sync_db is None:
+            return {}
+        row = await sync_db.user_configs.find_one({"_id": user_id})
+        return row if row else {}
+
+    async def get_synced_binary_configs(self, user_id=None):
+        sync_db = await self._get_sync_db()
+        if sync_db is None:
+            return []
+        if user_id:
+            cursor = sync_db.binaries.find({"user_id": user_id})
+        else:
+            cursor = sync_db.binaries.find({})
+        return await cursor.to_list(length=None)
+
     async def disconnect(self):
         self._return = True
         if self._conn is not None:

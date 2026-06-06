@@ -160,6 +160,33 @@ async def load_settings():
             user_data[uid] = row
         LOGGER.info("Users data has been imported from Database")
 
+    synced_bin = await database.get_synced_binary_configs()
+    for s in synced_bin:
+        uid = s.get("user_id", s["_id"])
+        if uid not in user_data:
+            user_data[uid] = {}
+        cname = s.get("config_name", "")
+        if cname.endswith(".conf"):
+            rclone_config_path = f"rclone/{uid}.conf"
+            async with aiopen(rclone_config_path, "wb+") as f:
+                await f.write(s["config_data"])
+            user_data[uid]["RCLONE_CONFIG"] = rclone_config_path
+        elif cname.endswith(".pickle"):
+            token_path = f"tokens/{uid}.pickle"
+            async with aiopen(token_path, "wb+") as f:
+                await f.write(s["config_data"])
+            user_data[uid]["TOKEN_PICKLE"] = token_path
+
+    for uid in list(user_data.keys()):
+        synced = await database.get_synced_user_config(uid)
+        if not synced:
+            continue
+        for key in Config.USER_SYNC_KEYS:
+            if key in ["RCLONE_CONFIG", "TOKEN_PICKLE", "THUMBNAIL"]:
+                continue
+            if key in synced and synced[key]:
+                user_data[uid][key] = synced[key]
+
     if await database.db.rss[BOT_ID].find_one():
         rows = database.db.rss[BOT_ID].find({})
         async for row in rows:
