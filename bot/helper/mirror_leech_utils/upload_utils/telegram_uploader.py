@@ -370,6 +370,9 @@ class TelegramUploader:
         thumb = self._thumb
         try:
             is_video, is_audio, is_image = await get_document_type(self._up_path)
+            # byte split parts (name.ext.001) aren't playable, upload them as plain documents
+            if self._listener.split_part_at_end and re_match(r".+\.\d{3}$", file):
+                is_video, is_audio, is_image = False, False, False
 
             if not is_image and thumb is None:
                 file_name = ospath.splitext(file)[0]

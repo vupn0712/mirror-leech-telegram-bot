@@ -1241,7 +1241,11 @@ class TaskConfig:
                     split_size = (f_size // parts) + (f_size % parts)
                 else:
                     split_size = self.split_size
-                if not self.as_doc and (await get_document_type(f_path))[0]:
+                if (
+                    not self.as_doc
+                    and not self.split_part_at_end
+                    and (await get_document_type(f_path))[0]
+                ):
                     self.progress = True
                     res = await ffmpeg.split(f_path, file_, parts, split_size)
                 else:

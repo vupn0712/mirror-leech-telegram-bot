@@ -398,7 +398,7 @@ see [Using Service Accounts](https://github.com/anasty17/mirror-leech-telegram-b
 
 - `EQUAL_SPLITS` (`Bool`): Split files larger than **LEECH_SPLIT_SIZE** into equal parts size (Not working with zip cmd). Default is `False`.
 
-- `SPLIT_PART_AT_END` (`Bool`): Put the part number at the end of split video names, like `movie.mkv.001` instead of `movie.part001.mkv`. Default is `False`.
+- `SPLIT_PART_AT_END` (`Bool`): Split videos by bytes like other files, naming parts `movie.mkv.001` instead of `movie.part001.mkv`, and upload them as documents. Parts can be joined back with `cat` or 7-Zip, but can't be played separately. Default is `False`.
 
 - `MEDIA_GROUP` (`Bool`): View Uploaded split file parts in media group. Default is `False`.
 
